@@ -151,7 +151,7 @@ for (x in 1:dim(df_prop_code)[1]){
     #Close readLines function after saving output to variable, this will avoid warnings later.
     on.exit(close(contents))
     #insert sleep to prevent spamming the API
-    Sys.sleep(1)
+    Sys.sleep(0.5)
     
     #Grep of contents that finds the location of the line right before the value.
     congrep_value=grep(pattern = "\"@name\" : \"value\",",contents)
@@ -173,7 +173,7 @@ for (x in 1:dim(df_prop_code)[1]){
         prop_contents=suppressWarnings(readLines(curl(url = prop_url), warn = F))
         on.exit(close(prop_contents))
         #insert sleep to prevent spamming the API
-        Sys.sleep(1)
+        Sys.sleep(0.5)
         
         prop_grep_id=grep(pattern =  '"@name\" : \"publicID\",', x = prop_contents)
         prop_grep_id=prop_grep_id+1
@@ -217,7 +217,7 @@ for (x in 1:dim(df_prop_code)[1]){
     #Close readLines function after saving output to variable, this will avoid warnings later.
     on.exit(close(prop_contents))
     #insert sleep to prevent spamming the API
-    Sys.sleep(1)
+    Sys.sleep(0.5)
 
     prop_grep_id=grep(pattern =  '"@name\" : \"publicID\",', x = prop_contents)
     prop_grep_id=prop_grep_id+1
