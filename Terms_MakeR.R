@@ -90,9 +90,9 @@ prop_yaml=read_yaml(file = property_path)
 ###########
 
 #Rework the file path to obtain a file name, this will be used for the output file.
-file_name=stri_reverse(stri_split_fixed(stri_reverse(basename(file_path)),pattern = ".", n=2)[[1]][2])
+file_name=stri_reverse(stri_split_fixed(stri_reverse(basename(property_path)),pattern = ".", n=2)[[1]][2])
 
-path=paste(dirname(file_path),"/",sep = "")
+path=paste(dirname(property_path),"/",sep = "")
 
 #Output file.
 output_file=paste(file_name,
