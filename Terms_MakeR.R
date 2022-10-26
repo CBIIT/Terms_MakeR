@@ -90,12 +90,18 @@ prop_yaml=read_yaml(file = property_path)
 ###########
 
 #Rework the file path to obtain a file name, this will be used for the output file.
-file_name=stri_reverse(stri_split_fixed(str = (stri_split_fixed(str = stri_reverse(property_path), pattern="/",n = 2)[[1]][1]),pattern = ".", n=2)[[1]][2])
+file_name=stri_reverse(stri_split_fixed(stri_reverse(basename(file_path)),pattern = ".", n=2)[[1]][2])
 
-path=paste(stri_reverse(stri_split_fixed(str = stri_reverse(property_path), pattern="/",n = 2)[[1]][2]),"/",sep = "")
+path=paste(dirname(file_path),"/",sep = "")
 
 #Output file.
-output_file=paste(file_name,"_terms",sep="")
+output_file=paste(file_name,
+                  "_terms",
+                  stri_replace_all_fixed(
+                    str = Sys.Date(),
+                    pattern = "-",
+                    replacement = ""),
+                  sep="")
 
 
 #################
@@ -356,4 +362,4 @@ write(x = df_all_terms_JSON, file = paste(path,output_file,".json",sep = ""))
 
 write_yaml(x = terms_ordered2, file = paste(path,output_file,".yaml",sep = ""))
 
-cat(paste("\nThe following term files have been written out here: ",path,"\n\n",sep = ""))
+cat(paste("\n\nProcess Complete.\n\nThe output files can be found here: ",path,"\n\n",sep = ""))
