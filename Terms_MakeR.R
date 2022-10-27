@@ -57,7 +57,7 @@ option_list = list(
 )
 
 #create list of options and values for file input
-opt_parser = OptionParser(option_list=option_list, description = "\nTerms_MakeR.R version 1.0")
+opt_parser = OptionParser(option_list=option_list, description = "\nTerms_MakeR.R v2.0.0")
 opt = parse_args(opt_parser)
 
 #If no options are presented, return --help, stop and print the following message.
