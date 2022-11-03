@@ -57,7 +57,7 @@ option_list = list(
 )
 
 #create list of options and values for file input
-opt_parser = OptionParser(option_list=option_list, description = "\nTerms_MakeR.R v2.0.0")
+opt_parser = OptionParser(option_list=option_list, description = "\nTerms_MakeR.R v2.0.1")
 opt = parse_args(opt_parser)
 
 #If no options are presented, return --help, stop and print the following message.
@@ -152,7 +152,7 @@ for (x in 1:dim(df_prop_code)[1]){
   values_vec=c()
   if (df_prop_code$Source[x]=="caDSR"){
     #Use curl to real API with readLines functions
-    contents=suppressWarnings(readLines(curl(url = paste("https://cadsrapi.cancer.gov/invoke/caDSR/GetJSON?query=PermissibleValue,ValueDomainPermissibleValue,ValueDomain&DataElement[@publicId=", df_prop_code$Code[x],"]",sep = "")), warn = F))
+    contents=suppressWarnings(readLines(curl(url = paste("https://cadsrapi.cancer.gov/invoke/caDSR/GetJSON?query=PermissibleValue,ValueDomainPermissibleValue,ValueDomain&DataElement[@publicId=", df_prop_code$Code[x],",@latestVersionIndicator=Yes]",sep = "")), warn = F))
     
     #Close readLines function after saving output to variable, this will avoid warnings later.
     on.exit(close(contents))
@@ -218,12 +218,12 @@ for (x in 1:dim(df_prop_code)[1]){
     }
     #Add the property term information
     #Use curl to real API with readLines functions
-    prop_contents=suppressWarnings(readLines(curl(url = paste("https://cadsrapi.cancer.gov/invoke/caDSR/GetJSON?query=DataElement[@publicId=", df_prop_code$Code[x],"]",sep = "")), warn = F))
+    prop_contents=suppressWarnings(readLines(curl(url = paste("https://cadsrapi.cancer.gov/invoke/caDSR/GetJSON?query=DataElement[@publicId=", df_prop_code$Code[x],",@latestVersionIndicator=Yes]",sep = "")), warn = F))
     
     #Close readLines function after saving output to variable, this will avoid warnings later.
     on.exit(close(prop_contents))
     #insert sleep to prevent spamming the API
-    Sys.sleep(0.5)
+    Sys.sleep(0.25)
 
     prop_grep_id=grep(pattern =  '"@name\" : \"publicID\",', x = prop_contents)
     prop_grep_id=prop_grep_id+1
