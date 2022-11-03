@@ -57,7 +57,7 @@ option_list = list(
 )
 
 #create list of options and values for file input
-opt_parser = OptionParser(option_list=option_list, description = "\nTerms_MakeR.R v2.0.1")
+opt_parser = OptionParser(option_list=option_list, description = "\nTerms_MakeR.R v2.0.1\n\nThis script takes the model property file from a CBIIT data model and creates a set of term lists, term dictionaries and a list of terms to add to specific properties.")
 opt = parse_args(opt_parser)
 
 #If no options are presented, return --help, stop and print the following message.
