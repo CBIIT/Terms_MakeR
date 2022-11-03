@@ -7,7 +7,7 @@ Run the following command in a terminal where R is installed for help.
 Rscript --vanilla Terms_MakeR.R -h
 Usage: Terms_MakeR.R [options]
 
-Terms_MakeR.R version 2.0.0
+Terms_MakeR.R version 2.0.1
 
 Options:
 	-p CHARACTER, --property=CHARACTER
