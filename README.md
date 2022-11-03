@@ -9,6 +9,8 @@ Usage: Terms_MakeR.R [options]
 
 Terms_MakeR.R version 2.0.1
 
+This script takes the model property file from a CBIIT data model and creates a set of term lists, term dictionaries and a list of terms to add to specific properties.
+
 Options:
 	-p CHARACTER, --property=CHARACTER
 		Model property file yaml
