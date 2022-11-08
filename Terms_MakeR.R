@@ -57,7 +57,7 @@ option_list = list(
 )
 
 #create list of options and values for file input
-opt_parser = OptionParser(option_list=option_list, description = "\nTerms_MakeR.R v2.0.0")
+opt_parser = OptionParser(option_list=option_list, description = "\nTerms_MakeR.R v2.0.1")
 opt = parse_args(opt_parser)
 
 #If no options are presented, return --help, stop and print the following message.
@@ -152,12 +152,12 @@ for (x in 1:dim(df_prop_code)[1]){
   values_vec=c()
   if (df_prop_code$Source[x]=="caDSR"){
     #Use curl to real API with readLines functions
-    contents=suppressWarnings(readLines(curl(url = paste("https://cadsrapi.cancer.gov/invoke/caDSR/GetJSON?query=PermissibleValue,ValueDomainPermissibleValue,ValueDomain&DataElement[@publicId=", df_prop_code$Code[x],"]",sep = "")), warn = F))
+    contents=suppressWarnings(readLines(curl(url = paste("https://cadsrapi.cancer.gov/invoke/caDSR/GetJSON?query=PermissibleValue,ValueDomainPermissibleValue,ValueDomain&DataElement[@publicId=", df_prop_code$Code[x],",@latestVersionIndicator=Yes]",sep = "")), warn = F))
     
     #Close readLines function after saving output to variable, this will avoid warnings later.
     on.exit(close(contents))
     #insert sleep to prevent spamming the API
-    Sys.sleep(0.5)
+    Sys.sleep(0.1)
     
     #Grep of contents that finds the location of the line right before the value.
     congrep_value=grep(pattern = "\"@name\" : \"value\",",contents)
@@ -179,7 +179,7 @@ for (x in 1:dim(df_prop_code)[1]){
         prop_contents=suppressWarnings(readLines(curl(url = prop_url), warn = F))
         on.exit(close(prop_contents))
         #insert sleep to prevent spamming the API
-        Sys.sleep(0.5)
+        Sys.sleep(0.1)
         
         prop_grep_id=grep(pattern =  '"@name\" : \"publicID\",', x = prop_contents)
         prop_grep_id=prop_grep_id+1
@@ -207,23 +207,20 @@ for (x in 1:dim(df_prop_code)[1]){
         
         origin="caDSR"
         
-        #See how many versions there are, and take the highest number, the most recent version
-        ver=length(prop_ver)
-        
-        tmp_list=list(list(Origin=origin,Definition=prop_def[ver],Code=prop_public_id[ver],Version=prop_ver[ver],Value=prop_value[ver]))
-        names(tmp_list)<-prop_name[ver]
+        tmp_list=list(list(Origin=origin,Definition=prop_def,Code=prop_public_id,Version=prop_ver,Value=prop_value))
+        names(tmp_list)<-prop_name
         
         terms$Terms=append(terms$Terms,tmp_list)
       }
     }
     #Add the property term information
     #Use curl to real API with readLines functions
-    prop_contents=suppressWarnings(readLines(curl(url = paste("https://cadsrapi.cancer.gov/invoke/caDSR/GetJSON?query=DataElement[@publicId=", df_prop_code$Code[x],"]",sep = "")), warn = F))
+    prop_contents=suppressWarnings(readLines(curl(url = paste("https://cadsrapi.cancer.gov/invoke/caDSR/GetJSON?query=DataElement[@publicId=", df_prop_code$Code[x],",@latestVersionIndicator=Yes]",sep = "")), warn = F))
     
     #Close readLines function after saving output to variable, this will avoid warnings later.
     on.exit(close(prop_contents))
     #insert sleep to prevent spamming the API
-    Sys.sleep(0.5)
+    Sys.sleep(0.1)
 
     prop_grep_id=grep(pattern =  '"@name\" : \"publicID\",', x = prop_contents)
     prop_grep_id=prop_grep_id+1
@@ -251,10 +248,28 @@ for (x in 1:dim(df_prop_code)[1]){
     
     origin="caDSR"
     
-    #See how many versions there are, and take the highest number, the most recent version
-    ver=length(prop_ver)
     
-    tmp_list=list(list(Origin=origin,Definition=prop_def[ver],Code=prop_public_id[ver],Version=prop_ver[ver],Value=prop_value[ver]))
+    #Check flags of registrationStatus and workflowStatusName to make sure they are not "Retired" and/or "Retired Archive / Superseded" resepectively.
+    regstat_grep_def=grep(pattern =  '\"@name\" : \"registrationStatus\"', x = prop_contents)
+    regstat_grep_def=regstat_grep_def+1
+    regstat_def=prop_contents[regstat_grep_def]
+    regstat_def = stri_replace_all_fixed(str = regstat_def,pattern = '          \"*body\" : ',replacement = "")
+    regstat_def=tolower(str_sub(string = regstat_def, 2,-2))
+    
+    workstat_grep_def=grep(pattern =  '\"@name\" : \"workflowStatusName\"', x = prop_contents)
+    workstat_grep_def=workstat_grep_def+1
+    workstat_def=prop_contents[workstat_grep_def]
+    workstat_def = stri_replace_all_fixed(str = workstat_def,pattern = '          \"*body\" : ',replacement = "")
+    workstat_def=tolower(str_sub(string = workstat_def, 2,-2))
+    
+    #If statement to call out if old and/or deprecated terms are found
+    if (regstat_def=="retired" | workstat_def=="retired archived" | workstat_def=="superseded"){
+      cat(paste("\nWARNING: The following property, ",df_prop_code$Property[x],", for the code, ",df_prop_code$Code[x],", has been noted as being retired or superseded. Please look into choosing a different caDSR term code.",sep = ""))
+    }
+    
+    
+    
+    tmp_list=list(list(Origin=origin,Definition=prop_def,Code=prop_public_id,Version=prop_ver,Value=prop_value))
     names(tmp_list)<-df_prop_code$Property[x]
     
     terms$Terms=append(terms$Terms,tmp_list)
