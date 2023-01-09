@@ -26,7 +26,7 @@ list_of_packages=c("dplyr","stringr","yaml","stringi","readxl","curl","jsonlite"
 
 #Based on the packages that are present, install ones that are required.
 new.packages <- list_of_packages[!(list_of_packages %in% installed.packages()[,"Package"])]
-suppressMessages(if(length(new.packages)) install.packages(new.packages))
+suppressMessages(if(length(new.packages)) install.packages(new.packages, repos = "http://cran.us.r-project.org"))
 
 #Load libraries.
 suppressMessages(library(dplyr,verbose = F))
