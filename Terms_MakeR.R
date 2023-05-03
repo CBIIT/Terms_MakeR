@@ -151,131 +151,133 @@ values_list=list()
 for (x in 1:dim(df_prop_code)[1]){
   values_vec=c()
   if (df_prop_code$Source[x]=="caDSR"){
-    #Use curl to real API with readLines functions
-    contents=suppressWarnings(readLines(curl(url = paste("https://cadsrapi.cancer.gov/invoke/caDSR/GetJSON?query=PermissibleValue,ValueDomainPermissibleValue,ValueDomain&DataElement[@publicId=", df_prop_code$Code[x],",@latestVersionIndicator=Yes]",sep = "")), warn = F))
-    
-    #Close readLines function after saving output to variable, this will avoid warnings later.
-    on.exit(close(contents))
-    #insert sleep to prevent spamming the API
-    Sys.sleep(0.1)
-    
-    #Grep of contents that finds the location of the line right before the value.
-    congrep_value=grep(pattern = "\"@name\" : \"value\",",contents)
-    congrep_link=grep(pattern = 'ValueMeaning&PermissibleValue', contents)
-    constr_link=contents[congrep_link]
-    constr_link_count=0
-    #If there are enumerated values in the contents, it will go through each of the primary, then check for any alt CDEs, make a unique list and remove any values that are redundant and are all UPPERCASE.
-    if (length(congrep_value)!=0){
-      for (grepnum in congrep_value){
-        y=grepnum+1
-        constr_link_count=constr_link_count+1
-        prop_name=stri_replace_all_fixed(str = stri_replace_all_fixed(str = contents[y],pattern = "          \"*body\" : \"",replacement = ""),pattern = "\"",replacement = "")
-        
-        values_vec=c(values_vec,prop_name)
-        
-        #Create URL to then grab all information about the property
-        prop_url= stri_replace_all_fixed(str = constr_link[constr_link_count],pattern = '          \"@xlink:href\" : ',replacement = "")
-        prop_url=str_sub(string = prop_url, 2,-2)
-        prop_contents=suppressWarnings(readLines(curl(url = prop_url), warn = F))
-        on.exit(close(prop_contents))
-        #insert sleep to prevent spamming the API
-        Sys.sleep(0.1)
-        
-        prop_grep_id=grep(pattern =  '"@name\" : \"publicID\",', x = prop_contents)
-        prop_grep_id=prop_grep_id+1
-        prop_public_id=prop_contents[prop_grep_id]
-        prop_public_id = stri_replace_all_fixed(str = prop_public_id,pattern = '          \"*body\" : ',replacement = "")
-        prop_public_id=as.integer(str_sub(string = prop_public_id, 2,-2))
-        
-        prop_grep_ver=grep(pattern =  '\"@name\" : \"version\"', x = prop_contents)
-        prop_grep_ver=prop_grep_ver+1
-        prop_ver=prop_contents[prop_grep_ver]
-        prop_ver = stri_replace_all_fixed(str = prop_ver,pattern = '          \"*body\" : ',replacement = "")
-        prop_ver=as.integer(str_sub(string = prop_ver, 2,-2))
-        
-        prop_grep_def=grep(pattern =  '\"@name\" : \"preferredDefinition\"', x = prop_contents)
-        prop_grep_def=prop_grep_def+1
-        prop_def=prop_contents[prop_grep_def]
-        prop_def = stri_replace_all_fixed(str = prop_def,pattern = '          \"*body\" : ',replacement = "")
-        prop_def=str_sub(string = prop_def, 2,-2)
-        
-        prop_grep_value=grep(pattern =  '\"@name\" : \"shortMeaning\"', x = prop_contents)
-        prop_grep_value=prop_grep_value+1
-        prop_value=prop_contents[prop_grep_value]
-        prop_value = stri_replace_all_fixed(str = prop_value,pattern = '          \"*body\" : ',replacement = "")
-        prop_value=str_sub(string = prop_value, 2,-2)
-        
-        origin="caDSR"
-        
-        tmp_list=list(list(Origin=origin,Definition=prop_def,Code=prop_public_id,Version=prop_ver,Value=prop_value))
-        names(tmp_list)<-prop_name
-        
-        terms$Terms=append(terms$Terms,tmp_list)
+    if (!any(is.na(df_prop_code$Code[x])| df_prop_code$Code[x]=="NA")){
+      #Use curl to real API with readLines functions
+      contents=suppressWarnings(readLines(curl(url = paste("https://cadsrapi.cancer.gov/invoke/caDSR/GetJSON?query=PermissibleValue,ValueDomainPermissibleValue,ValueDomain&DataElement[@publicId=", df_prop_code$Code[x],",@latestVersionIndicator=Yes]",sep = "")), warn = F))
+      
+      #Close readLines function after saving output to variable, this will avoid warnings later.
+      on.exit(close(contents))
+      #insert sleep to prevent spamming the API
+      Sys.sleep(0.1)
+      
+      #Grep of contents that finds the location of the line right before the value.
+      congrep_value=grep(pattern = "\"@name\" : \"value\",",contents)
+      congrep_link=grep(pattern = 'ValueMeaning&PermissibleValue', contents)
+      constr_link=contents[congrep_link]
+      constr_link_count=0
+      #If there are enumerated values in the contents, it will go through each of the primary, then check for any alt CDEs, make a unique list and remove any values that are redundant and are all UPPERCASE.
+      if (length(congrep_value)!=0){
+        for (grepnum in congrep_value){
+          y=grepnum+1
+          constr_link_count=constr_link_count+1
+          prop_name=stri_replace_all_fixed(str = stri_replace_all_fixed(str = contents[y],pattern = "          \"*body\" : \"",replacement = ""),pattern = "\"",replacement = "")
+          
+          values_vec=c(values_vec,prop_name)
+          
+          #Create URL to then grab all information about the property
+          prop_url= stri_replace_all_fixed(str = constr_link[constr_link_count],pattern = '          \"@xlink:href\" : ',replacement = "")
+          prop_url=str_sub(string = prop_url, 2,-2)
+          prop_contents=suppressWarnings(readLines(curl(url = prop_url), warn = F))
+          on.exit(close(prop_contents))
+          #insert sleep to prevent spamming the API
+          Sys.sleep(0.1)
+          
+          prop_grep_id=grep(pattern =  '"@name\" : \"publicID\",', x = prop_contents)
+          prop_grep_id=prop_grep_id+1
+          prop_public_id=prop_contents[prop_grep_id]
+          prop_public_id = stri_replace_all_fixed(str = prop_public_id,pattern = '          \"*body\" : ',replacement = "")
+          prop_public_id=as.integer(str_sub(string = prop_public_id, 2,-2))
+          
+          prop_grep_ver=grep(pattern =  '\"@name\" : \"version\"', x = prop_contents)
+          prop_grep_ver=prop_grep_ver+1
+          prop_ver=prop_contents[prop_grep_ver]
+          prop_ver = stri_replace_all_fixed(str = prop_ver,pattern = '          \"*body\" : ',replacement = "")
+          prop_ver=as.integer(str_sub(string = prop_ver, 2,-2))
+          
+          prop_grep_def=grep(pattern =  '\"@name\" : \"preferredDefinition\"', x = prop_contents)
+          prop_grep_def=prop_grep_def+1
+          prop_def=prop_contents[prop_grep_def]
+          prop_def = stri_replace_all_fixed(str = prop_def,pattern = '          \"*body\" : ',replacement = "")
+          prop_def=str_sub(string = prop_def, 2,-2)
+          
+          prop_grep_value=grep(pattern =  '\"@name\" : \"shortMeaning\"', x = prop_contents)
+          prop_grep_value=prop_grep_value+1
+          prop_value=prop_contents[prop_grep_value]
+          prop_value = stri_replace_all_fixed(str = prop_value,pattern = '          \"*body\" : ',replacement = "")
+          prop_value=str_sub(string = prop_value, 2,-2)
+          
+          origin="caDSR"
+          
+          tmp_list=list(list(Origin=origin,Definition=prop_def,Code=prop_public_id,Version=prop_ver,Value=prop_value))
+          names(tmp_list)<-prop_name
+          
+          terms$Terms=append(terms$Terms,tmp_list)
+        }
       }
+      #Add the property term information
+      #Use curl to real API with readLines functions
+      prop_contents=suppressWarnings(readLines(curl(url = paste("https://cadsrapi.cancer.gov/invoke/caDSR/GetJSON?query=DataElement[@publicId=", df_prop_code$Code[x],",@latestVersionIndicator=Yes]",sep = "")), warn = F))
+      
+      #Close readLines function after saving output to variable, this will avoid warnings later.
+      on.exit(close(prop_contents))
+      #insert sleep to prevent spamming the API
+      Sys.sleep(0.1)
+      
+      prop_grep_id=grep(pattern =  '"@name\" : \"publicID\",', x = prop_contents)
+      prop_grep_id=prop_grep_id+1
+      prop_public_id=prop_contents[prop_grep_id]
+      prop_public_id = stri_replace_all_fixed(str = prop_public_id,pattern = '          \"*body\" : ',replacement = "")
+      prop_public_id=as.integer(str_sub(string = prop_public_id, 2,-2))
+      
+      prop_grep_ver=grep(pattern =  '\"@name\" : \"version\"', x = prop_contents)
+      prop_grep_ver=prop_grep_ver+1
+      prop_ver=prop_contents[prop_grep_ver]
+      prop_ver = stri_replace_all_fixed(str = prop_ver,pattern = '          \"*body\" : ',replacement = "")
+      prop_ver=as.integer(str_sub(string = prop_ver, 2,-2))
+      
+      prop_grep_def=grep(pattern =  '\"@name\" : \"preferredDefinition\"', x = prop_contents)
+      prop_grep_def=prop_grep_def+1
+      prop_def=prop_contents[prop_grep_def]
+      prop_def = stri_replace_all_fixed(str = prop_def,pattern = '          \"*body\" : ',replacement = "")
+      prop_def=str_sub(string = prop_def, 2,-2)
+      
+      prop_grep_value=grep(pattern =  '\"@name\" : \"longName\"', x = prop_contents)
+      prop_grep_value=prop_grep_value+1
+      prop_value=prop_contents[prop_grep_value]
+      prop_value = stri_replace_all_fixed(str = prop_value,pattern = '          \"*body\" : ',replacement = "")
+      prop_value=str_sub(string = prop_value, 2,-2)
+      
+      origin="caDSR"
+      
+      
+      #Check flags of registrationStatus and workflowStatusName to make sure they are not "Retired" and/or "Retired Archive / Superseded" resepectively.
+      regstat_grep_def=grep(pattern =  '\"@name\" : \"registrationStatus\"', x = prop_contents)
+      regstat_grep_def=regstat_grep_def+1
+      regstat_def=prop_contents[regstat_grep_def]
+      regstat_def = stri_replace_all_fixed(str = regstat_def,pattern = '          \"*body\" : ',replacement = "")
+      regstat_def=tolower(str_sub(string = regstat_def, 2,-2))
+      
+      workstat_grep_def=grep(pattern =  '\"@name\" : \"workflowStatusName\"', x = prop_contents)
+      workstat_grep_def=workstat_grep_def+1
+      workstat_def=prop_contents[workstat_grep_def]
+      workstat_def = stri_replace_all_fixed(str = workstat_def,pattern = '          \"*body\" : ',replacement = "")
+      workstat_def=tolower(str_sub(string = workstat_def, 2,-2))
+      
+      #If statement to call out if old and/or deprecated terms are found
+      if (regstat_def=="retired" | workstat_def=="retired archived" | workstat_def=="superseded"){
+        cat(paste("\nWARNING: The following property, ",df_prop_code$Property[x],", for the code, ",df_prop_code$Code[x],", has been noted as being retired or superseded. Please look into choosing a different caDSR term code.",sep = ""))
+      }
+      
+      
+      
+      tmp_list=list(list(Origin=origin,Definition=prop_def,Code=prop_public_id,Version=prop_ver,Value=prop_value))
+      names(tmp_list)<-df_prop_code$Property[x]
+      
+      terms$Terms=append(terms$Terms,tmp_list)
     }
-    #Add the property term information
-    #Use curl to real API with readLines functions
-    prop_contents=suppressWarnings(readLines(curl(url = paste("https://cadsrapi.cancer.gov/invoke/caDSR/GetJSON?query=DataElement[@publicId=", df_prop_code$Code[x],",@latestVersionIndicator=Yes]",sep = "")), warn = F))
-    
-    #Close readLines function after saving output to variable, this will avoid warnings later.
-    on.exit(close(prop_contents))
-    #insert sleep to prevent spamming the API
-    Sys.sleep(0.1)
-
-    prop_grep_id=grep(pattern =  '"@name\" : \"publicID\",', x = prop_contents)
-    prop_grep_id=prop_grep_id+1
-    prop_public_id=prop_contents[prop_grep_id]
-    prop_public_id = stri_replace_all_fixed(str = prop_public_id,pattern = '          \"*body\" : ',replacement = "")
-    prop_public_id=as.integer(str_sub(string = prop_public_id, 2,-2))
-    
-    prop_grep_ver=grep(pattern =  '\"@name\" : \"version\"', x = prop_contents)
-    prop_grep_ver=prop_grep_ver+1
-    prop_ver=prop_contents[prop_grep_ver]
-    prop_ver = stri_replace_all_fixed(str = prop_ver,pattern = '          \"*body\" : ',replacement = "")
-    prop_ver=as.integer(str_sub(string = prop_ver, 2,-2))
-    
-    prop_grep_def=grep(pattern =  '\"@name\" : \"preferredDefinition\"', x = prop_contents)
-    prop_grep_def=prop_grep_def+1
-    prop_def=prop_contents[prop_grep_def]
-    prop_def = stri_replace_all_fixed(str = prop_def,pattern = '          \"*body\" : ',replacement = "")
-    prop_def=str_sub(string = prop_def, 2,-2)
-    
-    prop_grep_value=grep(pattern =  '\"@name\" : \"longName\"', x = prop_contents)
-    prop_grep_value=prop_grep_value+1
-    prop_value=prop_contents[prop_grep_value]
-    prop_value = stri_replace_all_fixed(str = prop_value,pattern = '          \"*body\" : ',replacement = "")
-    prop_value=str_sub(string = prop_value, 2,-2)
-    
-    origin="caDSR"
-    
-    
-    #Check flags of registrationStatus and workflowStatusName to make sure they are not "Retired" and/or "Retired Archive / Superseded" resepectively.
-    regstat_grep_def=grep(pattern =  '\"@name\" : \"registrationStatus\"', x = prop_contents)
-    regstat_grep_def=regstat_grep_def+1
-    regstat_def=prop_contents[regstat_grep_def]
-    regstat_def = stri_replace_all_fixed(str = regstat_def,pattern = '          \"*body\" : ',replacement = "")
-    regstat_def=tolower(str_sub(string = regstat_def, 2,-2))
-    
-    workstat_grep_def=grep(pattern =  '\"@name\" : \"workflowStatusName\"', x = prop_contents)
-    workstat_grep_def=workstat_grep_def+1
-    workstat_def=prop_contents[workstat_grep_def]
-    workstat_def = stri_replace_all_fixed(str = workstat_def,pattern = '          \"*body\" : ',replacement = "")
-    workstat_def=tolower(str_sub(string = workstat_def, 2,-2))
-    
-    #If statement to call out if old and/or deprecated terms are found
-    if (regstat_def=="retired" | workstat_def=="retired archived" | workstat_def=="superseded"){
-      cat(paste("\nWARNING: The following property, ",df_prop_code$Property[x],", for the code, ",df_prop_code$Code[x],", has been noted as being retired or superseded. Please look into choosing a different caDSR term code.",sep = ""))
+    if (!is.null(values_vec)){
+      values_list[df_prop_code$Property[x]][[1]]=c(values_list[df_prop_code$Property[x]][[1]],values_vec)
     }
-    
-    
-    
-    tmp_list=list(list(Origin=origin,Definition=prop_def,Code=prop_public_id,Version=prop_ver,Value=prop_value))
-    names(tmp_list)<-df_prop_code$Property[x]
-    
-    terms$Terms=append(terms$Terms,tmp_list)
-  }
-  if (!is.null(values_vec)){
-    values_list[df_prop_code$Property[x]][[1]]=c(values_list[df_prop_code$Property[x]][[1]],values_vec)
   }
 }
 
