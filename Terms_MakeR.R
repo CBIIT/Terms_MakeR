@@ -57,7 +57,7 @@ option_list = list(
 )
 
 #create list of options and values for file input
-opt_parser = OptionParser(option_list=option_list, description = "\nTerms_MakeR.R v2.0.1")
+opt_parser = OptionParser(option_list=option_list, description = "\nTerms_MakeR.R v2.0.2")
 opt = parse_args(opt_parser)
 
 #If no options are presented, return --help, stop and print the following message.
@@ -340,9 +340,41 @@ enum_to_add=list()
 prop_yaml_new=prop_yaml
 
 for (prop in names(values_list)){
-  values_list[prop][[1]]
-  prop_yaml_new[[1]][prop][[1]]["Enum"][[1]]
-  if (!all(values_list[prop][[1]]%in%prop_yaml_new[[1]][prop][[1]]["Enum"][[1]])){
+  prop_values=values_list[prop][[1]]
+
+  
+  #set up to determine the enum list since we now have enum arrays and oneOfs
+  enum_list=prop_yaml_new[[1]][prop][[1]]["Enum"][[1]]
+  
+  type_list=prop_yaml_new[[1]][prop][[1]]["Type"][[1]]
+  
+  #This section handles the new "oneOf" setups in the data model and will break apart a type list to either get the data types or the enum list.
+  if (is.list(type_list)){
+    for (list_part in 1:length(type_list)){
+      if (length(type_list[[list_part]])!=1){
+        enum_list=type_list[[list_part]]
+      }
+    }
+  }else if (!is.null(type_list)){
+    if(unique(type_list == 'array')){
+      #setup to handle arrays with single items that might be lost in a non-array oneOf setup.
+      items=prop_yaml_new[[1]][prop][[1]]["Items"][[1]]
+      if (is.list(items)){
+        for (item_part in 1:length(items)){
+          if (length(items[[item_part]])!=1){
+            enum_list=items[[item_part]]
+          }
+        }
+      }else{
+        #if just an array of enums, list items as enums
+        enum_list=items
+      }
+    }
+  }
+  
+  
+  #If not all values are present, create a list of values to add.
+  if (!all(prop_values%in%enum_list)){
     newly_added_term=values_list[prop][[1]][!values_list[prop][[1]]%in%prop_yaml_new[[1]][prop][[1]]["Enum"][[1]]]
     
     enum_to_add[prop][[1]]=c(newly_added_term)
